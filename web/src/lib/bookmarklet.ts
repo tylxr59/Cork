@@ -143,11 +143,20 @@ function pinToCork(origin: string) {
     if (document.documentElement.lang) P.set('lang', document.documentElement.lang);
   }
   const images: string[] = [];
+  const seen = new Set<string>();
+  // the same picture at another size or on another host should count once:
+  // Wikimedia's /thumb/a/b.jpg/330px-b.jpg, WordPress's b-300x200.jpg, Shopify's b_800x.jpg
+  const sameImage = (u: URL) =>
+    /\.(jpe?g|png|gif|webp|avif)$/i.test(u.pathname)
+      ? u.pathname.replace(/\/thumb(\/.+\/([^/]+))\/\d+px-\2(\.[a-z]+)?$/i, '$1').replace(/[-_]\d+x\d*(?=\.[a-z]+$)/i, '')
+      : u.pathname + u.search;
   const add = (raw: string | null | undefined) => {
     if (!raw || images.length >= 30) return;
     try {
       const u = new URL(raw, location.href);
-      if (/^https?:$/.test(u.protocol) && !/\.svg$/i.test(u.pathname) && !images.includes(u.href)) images.push(u.href);
+      if (!/^https?:$/.test(u.protocol) || /\.svg$/i.test(u.pathname) || seen.has(sameImage(u))) return;
+      seen.add(sameImage(u));
+      images.push(u.href);
     } catch (e) {}
   };
 
@@ -173,7 +182,10 @@ function pinToCork(origin: string) {
   if (!images.length) {
     add(meta('og:image') || meta('twitter:image'));
     const largest = (e: HTMLImageElement) => {
-      let best = e.currentSrc || e.src || e.getAttribute('data-src') || e.getAttribute('data-lazy-src') || '';
+      // sites use data-pin-media to name the best version of an image for pinning
+      let best = e.getAttribute('data-pin-media') || '';
+      if (best) return best;
+      best = e.currentSrc || e.src || e.getAttribute('data-src') || e.getAttribute('data-lazy-src') || '';
       let bestW = 0;
       for (const part of (e.getAttribute('srcset') || '').split(/,\s+/)) {
         const [u, w] = part.trim().split(/\s+/);
@@ -186,12 +198,14 @@ function pinToCork(origin: string) {
     };
     const area = (e: HTMLImageElement) => {
       const r = e.getBoundingClientRect();
-      return r.width < 120 || r.height < 80 || (e.naturalWidth && e.naturalWidth < 120) ? 0 : r.width * r.height;
+      const optedOut = e.hasAttribute('data-pin-nopin') || e.hasAttribute('nopin');
+      const banner = (e.naturalWidth || r.width) > (e.naturalHeight || r.height) * 3;
+      const tiny = r.width < 120 || r.height < 80 || (e.naturalWidth && e.naturalWidth < 120);
+      return optedOut || banner || tiny ? 0 : r.width * r.height;
     };
-    [...document.images]
-      .filter(area)
-      .sort((a, b) => area(b) - area(a))
-      .forEach((e) => add(largest(e)));
+    const onScreen = [...document.images].filter(area).sort((a, b) => area(b) - area(a));
+    // anything far smaller than the biggest image is page furniture
+    onScreen.filter((e) => area(e) > area(onScreen[0]) / 30).forEach((e) => add(largest(e)));
   }
 
   const send = (picked: string[]) => {
