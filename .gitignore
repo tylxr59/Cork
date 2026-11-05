@@ -1,0 +1,16 @@
+# Build output
+/dist/
+/build/
+
+# Dependencies and environments
+node_modules/
+.venv/
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Local secrets
+.env
