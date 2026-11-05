@@ -172,7 +172,7 @@ Stop the container (or use `sqlite3 cork.db ".backup ..."`), then copy the whole
 
 ## 👋 Development
 
-You need Go 1.26+ and Node 24+.
+You need Go 1.27+ and Node 26+.
 
 ```sh
 # frontend dev server with hot reload (proxies /api and /media to :8080)
