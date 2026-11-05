@@ -1,6 +1,11 @@
 # Build output
 /dist/
 /build/
+web/dist/*
+!web/dist/.gitkeep
+
+# Local data
+/data/
 
 # Dependencies and environments
 node_modules/
