@@ -168,7 +168,11 @@ type pinFields struct {
 	Currency    *string `json:"currency"`
 }
 
-var currencyRE = regexp.MustCompile(`^[A-Z]{3}$`)
+var (
+	currencyRE = regexp.MustCompile(`^[A-Za-z]{3}$`)
+	// a currency symbol, for when the code isn't knowable (a bare "kr" could be SEK, NOK or DKK)
+	currencySymbolRE = regexp.MustCompile(`^[^\s\d<>"'&]{1,4}$`)
+)
 
 func (f *pinFields) validate() string {
 	trim := func(p *string, maxLen int, name string) string {
@@ -198,9 +202,12 @@ func (f *pinFields) validate() string {
 		}
 	}
 	if f.Currency != nil {
-		*f.Currency = strings.ToUpper(*f.Currency)
-		if *f.Currency != "" && !currencyRE.MatchString(*f.Currency) {
-			return "currency must be a 3-letter code like USD"
+		switch c := *f.Currency; {
+		case c == "":
+		case currencyRE.MatchString(c):
+			*f.Currency = strings.ToUpper(c)
+		case !currencySymbolRE.MatchString(c):
+			return "currency must be a code like USD or a symbol like $"
 		}
 	}
 	if f.SourceURL != nil && *f.SourceURL != "" {
