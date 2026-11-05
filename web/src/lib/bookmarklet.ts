@@ -1,7 +1,9 @@
 // The "Pin to Cork" bookmarklet. It runs on the page being pinned, so it can
 // read things the server can't fetch (JS-rendered prices, sites like Amazon
 // that block bots). It passes the page's price text, currency (when the page
-// states one), language and main image to /new, which parses the price.
+// states one) and language to /new, which parses the price. When a page has
+// several images it shows a picker over the page, and the ticked ones go to /new
+// in the URL hash, which keeps long lists out of server and proxy URL limits.
 //
 // This function is serialised with toString(), so it must be self-contained:
 // no imports, no references to anything outside its own body.
@@ -99,7 +101,8 @@ function pinToCork(origin: string) {
   }
 
   // 6. scan the page for the most prominent price-looking text
-  if (!price) {
+  // (not on Reddit, where the only prices are in its ads and comments)
+  if (!price && !q('shreddit-app')) {
     const bad = /was|old|list|strike|compare|original|regular|before|saving|save|ship|deliver|instal|month|unit|coupon|rrp|msrp|reward|points/i;
     const els = document.body.getElementsByTagName('*');
     let best = 0;
@@ -139,13 +142,164 @@ function pinToCork(origin: string) {
     if (currency) P.set('currency', String(currency).trim());
     if (document.documentElement.lang) P.set('lang', document.documentElement.lang);
   }
-  const img = meta('og:image') || meta('twitter:image');
-  if (img)
+  const images: string[] = [];
+  const add = (raw: string | null | undefined) => {
+    if (!raw || images.length >= 30) return;
     try {
-      P.set('image', new URL(img, location.href).href);
+      const u = new URL(raw, location.href);
+      if (/^https?:$/.test(u.protocol) && !/\.svg$/i.test(u.pathname) && !images.includes(u.href)) images.push(u.href);
     } catch (e) {}
-  const u = origin + '/new?' + P;
-  if (!window.open(u, 'cork', 'width=920,height=820')) location.href = u;
+  };
+
+  // Amazon has no og:image. Its gallery's full-size URLs are only in an inline script.
+  const landing = q('#landingImage') as HTMLImageElement | null;
+  if (landing) {
+    add(landing.getAttribute('data-old-hires') || landing.src);
+    for (const s of document.scripts) {
+      if (!s.textContent?.includes('colorImages')) continue;
+      for (const m of s.textContent.matchAll(/"hiRes":(?:"([^"]+)"|null),"thumb":"[^"]*","large":"([^"]+)"/g)) add(m[1] || m[2]);
+    }
+  }
+
+  // Reddit: the post's own images, as originals. Every gallery image appears as
+  // both a preview.redd.it and an i.redd.it URL, and this makes them the same.
+  for (const e of document.querySelectorAll('shreddit-post gallery-carousel figure img, shreddit-post img#post-image')) {
+    const src = e.getAttribute('src') || e.getAttribute('data-lazy-src') || '';
+    const id = src.match(/^https:\/\/preview\.redd\.it\/(?:[^/?]*-)?([a-z0-9]+\.[a-z]+)(?:\?|$)/i);
+    add(id ? 'https://i.redd.it/' + id[1] : src);
+  }
+
+  // anywhere else: the page's declared image, then what's on screen, biggest first
+  if (!images.length) {
+    add(meta('og:image') || meta('twitter:image'));
+    const largest = (e: HTMLImageElement) => {
+      let best = e.currentSrc || e.src || e.getAttribute('data-src') || e.getAttribute('data-lazy-src') || '';
+      let bestW = 0;
+      for (const part of (e.getAttribute('srcset') || '').split(/,\s+/)) {
+        const [u, w] = part.trim().split(/\s+/);
+        if (u && parseFloat(w) > bestW) {
+          best = u;
+          bestW = parseFloat(w);
+        }
+      }
+      return best;
+    };
+    const area = (e: HTMLImageElement) => {
+      const r = e.getBoundingClientRect();
+      return r.width < 120 || r.height < 80 || (e.naturalWidth && e.naturalWidth < 120) ? 0 : r.width * r.height;
+    };
+    [...document.images]
+      .filter(area)
+      .sort((a, b) => area(b) - area(a))
+      .forEach((e) => add(largest(e)));
+  }
+
+  const send = (picked: string[]) => {
+    const hash = picked.length ? '#' + new URLSearchParams(picked.map((i) => ['image', i])) : '';
+    const u = origin + '/new?' + P + hash;
+    if (!window.open(u, 'cork', 'width=920,height=820')) location.href = u;
+  };
+
+  document.getElementById('cork-picker')?.remove();
+  if (images.length < 2) {
+    send(images);
+    return;
+  }
+
+  // The picker lives in a shadow root so the page's CSS can't reach it. It's built
+  // without innerHTML or style attributes, which strict sites block.
+  const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string) => {
+    const e = document.createElement(tag);
+    e.className = cls;
+    if (text) e.textContent = text;
+    return e;
+  };
+  const host = document.createElement('div');
+  host.id = 'cork-picker';
+  const root = host.attachShadow({ mode: 'open' });
+  const sheet = new CSSStyleSheet();
+  sheet.replaceSync(
+    ':host{all:initial;position:fixed;inset:0;z-index:2147483647}' +
+      '.back{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:#0009;font:15px/1.4 system-ui,sans-serif;color-scheme:light dark}' +
+      '.box{display:flex;flex-direction:column;gap:14px;width:min(860px,100%);max-height:100%;box-sizing:border-box;padding:20px;border-radius:16px;background:Canvas;color:CanvasText;box-shadow:0 12px 48px #0008}' +
+      'h2{margin:0;font-size:18px}' +
+      '.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;overflow:auto;padding:3px}' +
+      'label{position:relative;display:block;aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;outline:2px solid #8884}' +
+      'label:has(:checked){outline:3px solid #6d5dfc}' +
+      'label:has(:focus-visible){outline:3px solid Highlight}' +
+      'label img{width:100%;height:100%;object-fit:cover;display:block}' +
+      'input{position:absolute;top:8px;left:8px;width:20px;height:20px;margin:0;accent-color:#6d5dfc;cursor:pointer}' +
+      '.foot{display:flex;justify-content:flex-end;gap:10px}' +
+      'button{font:inherit;font-weight:600;padding:9px 16px;border-radius:10px;border:1px solid #8886;background:none;color:inherit;cursor:pointer}' +
+      'button.go{border-color:#6d5dfc;background:#6d5dfc;color:#fff}' +
+      'button:disabled{opacity:.5;cursor:default}'
+  );
+  root.adoptedStyleSheets = [sheet];
+
+  const back = el('div', 'back');
+  const box = el('div', 'box');
+  const grid = el('div', 'grid');
+  const foot = el('div', 'foot');
+  const cancel = el('button', '', 'Cancel');
+  const go = el('button', 'go');
+  const boxes: HTMLInputElement[] = [];
+  const close = () => {
+    host.remove();
+    document.removeEventListener('keydown', onKey, true);
+  };
+  const onKey = (e: KeyboardEvent) => {
+    if (e.key != 'Escape') return;
+    e.stopPropagation();
+    close();
+  };
+  const picked = () => boxes.filter((b) => b.checked && b.isConnected).map((b) => b.value);
+  const update = () => {
+    const n = picked().length;
+    go.disabled = !n;
+    go.textContent = n > 1 ? 'Pin ' + n + ' images' : 'Pin image';
+  };
+
+  images.forEach((src, i) => {
+    const tile = el('label', '');
+    const check = el('input', '');
+    check.type = 'checkbox';
+    check.value = src;
+    check.checked = i == 0;
+    check.setAttribute('aria-label', 'Image ' + (i + 1));
+    check.onchange = update;
+    const pic = el('img', '');
+    pic.alt = '';
+    const drop = () => {
+      tile.remove();
+      update();
+    };
+    pic.onerror = drop;
+    pic.onload = () => {
+      if (pic.naturalWidth < 120 || pic.naturalHeight < 80) drop();
+    };
+    pic.src = src;
+    boxes.push(check);
+    tile.append(check, pic);
+    grid.append(tile);
+  });
+
+  cancel.onclick = close;
+  go.onclick = () => {
+    const list = picked();
+    close();
+    send(list);
+  };
+  back.onclick = (e) => {
+    if (e.target == back) close();
+  };
+  foot.append(cancel, go);
+  box.append(el('h2', '', 'Choose images to pin'), grid, foot);
+  back.append(box);
+  root.append(back);
+  document.documentElement.append(host);
+  document.addEventListener('keydown', onKey, true);
+  update();
+  go.focus();
 }
 
 export function bookmarkletHref(origin: string): string {

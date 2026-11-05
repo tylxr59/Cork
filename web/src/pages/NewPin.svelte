@@ -16,11 +16,13 @@
   const params = router.current.query;
   const popup = params.get('popup') === '1';
 
-  // image source: uploaded files, or a remote image URL
+  // image source: uploaded files, or remote image URLs
   let files = $state<{ file: File; preview: string }[]>([]);
-  // the bookmarklet passes the page's main image (og:image), read in the browser
-  const bookmarkletImage = params.get('image') ?? '';
-  let imageUrl = $state(bookmarkletImage);
+  // images ticked in the bookmarklet, which arrive in the URL hash. Bookmarklets
+  // dragged out before the picker existed send a single ?image= instead.
+  const pickedImages = new URLSearchParams(location.hash.slice(1)).getAll('image');
+  const legacyImage = params.get('image');
+  let imageUrls = $state(pickedImages.length ? pickedImages : legacyImage ? [legacyImage] : []);
 
   let pageUrl = $state(params.get('url') ?? '');
   let scraped = $state<ScrapedPage | null>(null);
@@ -63,12 +65,14 @@
     })
     .catch(toastError);
 
-  if (params.get('url')) scrape();
+  // images were already chosen on the page, so only look for its description
+  if (params.get('url')) scrape(pickedImages.length > 0);
 
-  const hasImage = $derived(files.length > 0 || imageUrl !== '');
+  const hasImage = $derived(files.length > 0 || imageUrls.length > 0);
+  const pinCount = $derived(imageUrls.length || files.length);
   const candidates = $derived.by(() => {
     const list = scraped?.images ?? [];
-    const all = bookmarkletImage && !list.includes(bookmarkletImage) ? [bookmarkletImage, ...list] : list;
+    const all = legacyImage && !list.includes(legacyImage) ? [legacyImage, ...list] : list;
     return all.filter((u) => !hiddenCandidates[u]);
   });
 
@@ -78,7 +82,7 @@
       toast('That doesn’t look like an image', 'error');
       return;
     }
-    imageUrl = '';
+    imageUrls = [];
     files = [...files, ...imgs.map((file) => ({ file, preview: URL.createObjectURL(file) }))];
   }
 
@@ -90,10 +94,10 @@
   function clearImage() {
     files.forEach((f) => URL.revokeObjectURL(f.preview));
     files = [];
-    imageUrl = '';
+    imageUrls = [];
   }
 
-  async function scrape() {
+  async function scrape(detailsOnly = false) {
     const url = pageUrl.trim();
     if (!url) return;
     scraping = true;
@@ -102,7 +106,7 @@
     hiddenCandidates = {};
     try {
       const page = await api.scrape(url);
-      scraped = page;
+      if (!detailsOnly) scraped = page;
       if (!sourceUrl) sourceUrl = page.url;
       if (!title) title = page.title;
       if (!description) description = page.description;
@@ -111,17 +115,17 @@
         currency = page.currency;
       }
       // a direct image link: select it straight away
-      if (!imageUrl && page.images.length === 1 && page.images[0] === page.url) pick(page.url);
+      if (!imageUrls.length && page.images.length === 1 && page.images[0] === page.url) pick(page.url);
     } catch (e) {
-      scrapeError = (e as Error).message;
+      if (!detailsOnly) scrapeError = (e as Error).message;
     } finally {
       scraping = false;
     }
   }
 
   function pick(url: string) {
-    clearImage();
-    imageUrl = url;
+    if (files.length > 0) clearImage();
+    imageUrls = imageUrls.includes(url) ? imageUrls.filter((u) => u !== url) : [...imageUrls, url];
   }
 
   function onCandidateLoad(e: Event, url: string) {
@@ -185,10 +189,16 @@
       return fd;
     };
     try {
-      if (imageUrl) {
-        const fd = base();
-        fd.append('image_url', imageUrl);
-        emitPin({ type: 'created', pin: await api.createPin(fd) });
+      if (imageUrls.length > 0) {
+        const urls = [...imageUrls];
+        for (let i = 0; i < urls.length; i++) {
+          if (urls.length > 1) progress = `Saving ${i + 1} of ${urls.length}…`;
+          const fd = base();
+          fd.append('image_url', urls[i]);
+          emitPin({ type: 'created', pin: await api.createPin(fd) });
+          // if a later image fails, retrying must not pin this one twice
+          imageUrls = imageUrls.filter((u) => u !== urls[i]);
+        }
       } else {
         for (let i = 0; i < files.length; i++) {
           if (files.length > 1) progress = `Uploading ${i + 1} of ${files.length}…`;
@@ -242,13 +252,25 @@
           ondragleave={() => (dragging = false)}
           ondrop={onDrop}
         >
-          {#if imageUrl}
+          {#if imageUrls.length === 1}
             <div class="preview">
-              <img src={imageUrl} alt="Selected" referrerpolicy="no-referrer" />
+              <img src={imageUrls[0]} alt="Selected" referrerpolicy="no-referrer" />
               <button type="button" class="btn icon small remove" aria-label="Remove image" onclick={clearImage}>
                 <X size={16} />
               </button>
             </div>
+          {:else if imageUrls.length > 1}
+            <div class="multi">
+              {#each imageUrls as url (url)}
+                <div class="thumb">
+                  <img src={url} alt="" referrerpolicy="no-referrer" />
+                  <button type="button" class="btn icon small remove" aria-label="Remove" onclick={() => pick(url)}>
+                    <X size={14} />
+                  </button>
+                </div>
+              {/each}
+            </div>
+            <p class="muted small">{imageUrls.length} images — each becomes its own pin with the details on the right.</p>
           {:else if files.length === 1}
             <div class="preview">
               <img src={files[0].preview} alt="Selected" />
@@ -288,7 +310,7 @@
             }}
           />
         </div>
-        {#if files.length > 0 && !imageUrl}
+        {#if files.length > 0}
           <button type="button" class="btn small" onclick={() => fileInput?.click()}>Add more images</button>
         {/if}
 
@@ -308,7 +330,7 @@
                   }
                 }}
               />
-              <button type="button" class="btn" disabled={scraping || !pageUrl.trim()} onclick={scrape}>
+              <button type="button" class="btn" disabled={scraping || !pageUrl.trim()} onclick={() => scrape()}>
                 <Globe size={16} />
                 {scraping ? 'Fetching…' : 'Fetch'}
               </button>
@@ -319,10 +341,10 @@
             {#if candidates.length === 0}
               <p class="muted small">No usable images found on {domain(scraped.url)}.</p>
             {:else}
-              <p class="muted small">Pick an image from {domain(scraped.url)}:</p>
+              <p class="muted small">Pick images from {domain(scraped.url)}:</p>
               <div class="candidates">
                 {#each candidates as url (url)}
-                  <button type="button" class="cand" class:selected={imageUrl === url} onclick={() => pick(url)}>
+                  <button type="button" class="cand" class:selected={imageUrls.includes(url)} onclick={() => pick(url)}>
                     <img
                       src={url}
                       alt=""
@@ -331,7 +353,7 @@
                       onload={(e) => onCandidateLoad(e, url)}
                       onerror={() => (hiddenCandidates[url] = true)}
                     />
-                    {#if imageUrl === url}<span class="tick"><Check size={16} /></span>{/if}
+                    {#if imageUrls.includes(url)}<span class="tick"><Check size={16} /></span>{/if}
                   </button>
                 {/each}
               </div>
@@ -375,7 +397,7 @@
         </div>
         {#if price && scraped?.price}<p class="hint muted">Price found on {domain(scraped.url)}, saved as it is today.</p>{/if}
         <button class="btn primary save" disabled={saving || !hasImage || !boardId}>
-          {progress || (saving ? 'Saving…' : files.length > 1 ? `Save ${files.length} pins` : 'Save pin')}
+          {progress || (saving ? 'Saving…' : pinCount > 1 ? `Save ${pinCount} pins` : 'Save pin')}
         </button>
 
         {#if !popup}

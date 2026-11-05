@@ -24,7 +24,7 @@
   setUnauthorizedHandler(() => {
     if (session.user) {
       session.user = null;
-      navigate(`/login?next=${encodeURIComponent(location.pathname + location.search)}`, { replace: true });
+      navigate(`/login?next=${encodeURIComponent(location.pathname + location.search + location.hash)}`, { replace: true });
     }
   });
 
@@ -78,7 +78,7 @@
   // guards
   $effect(() => {
     if (!session.ready) return;
-    const here = location.pathname + location.search;
+    const here = location.pathname + location.search + location.hash;
     if (!session.user && !PUBLIC.has(route.page)) {
       navigate(`/login?next=${encodeURIComponent(here)}`, { replace: true });
     } else if (session.user && route.page === 'login') {

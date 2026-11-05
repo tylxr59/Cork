@@ -29,7 +29,8 @@
   {#if !compact}
     <p class="muted">
       Drag this button to your browser's bookmarks bar. On any website, click it to open Cork with that page ready to
-      pin. It fills in the link and title, and on shopping sites it saves the product's current price too.
+      pin. If the page has several images, tick the ones you want and each becomes its own pin. It fills in the link and
+      title, and on shopping sites it saves the product's current price too.
     </p>
   {/if}
 </div>

@@ -20,11 +20,13 @@
     e.preventDefault();
     error = '';
     busy = true;
+    // signing in redirects away from this page, which clears the ?next= query
+    const target = next;
     try {
       if (mode === 'login') await api.login(username, password);
       else await api.register(username, password);
       await refreshSession();
-      navigate(next, { replace: true });
+      navigate(target, { replace: true });
     } catch (err) {
       error = (err as Error).message;
     } finally {
