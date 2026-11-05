@@ -45,20 +45,18 @@ func NormalizePrice(s string) string {
 	return s
 }
 
+var currencySymbols = map[string]string{
+	"$": "USD", "US$": "USD", "CA$": "CAD", "C$": "CAD", "A$": "AUD", "AU$": "AUD", "NZ$": "NZD", "HK$": "HKD",
+	"S$": "SGD", "MX$": "MXN", "R$": "BRL", "NT$": "TWD", "€": "EUR", "£": "GBP", "¥": "JPY", "￥": "JPY",
+	"₹": "INR", "₩": "KRW", "₽": "RUB", "₺": "TRY", "₪": "ILS", "₱": "PHP", "฿": "THB", "₫": "VND", "₴": "UAH",
+	"₦": "NGN", "zł": "PLN", "Kč": "CZK",
+}
+
 // NormalizeCurrency returns an upper-case ISO 4217 code, mapping common symbols.
 func NormalizeCurrency(s string) string {
 	s = strings.TrimSpace(s)
-	switch s {
-	case "$":
-		return "USD"
-	case "€":
-		return "EUR"
-	case "£":
-		return "GBP"
-	case "¥":
-		return "JPY"
-	case "₹":
-		return "INR"
+	if c, ok := currencySymbols[s]; ok {
+		return c
 	}
 	s = strings.ToUpper(s)
 	if len(s) == 3 && strings.Trim(s, "ABCDEFGHIJKLMNOPQRSTUVWXYZ") == "" {

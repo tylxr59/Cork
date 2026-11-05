@@ -24,12 +24,16 @@ export function plural(n: number, word: string) {
   return `${n} ${word}${n === 1 ? '' : 's'}`;
 }
 
-/** Formats a stored price ("1299.5", "USD") for display, e.g. "$1,299.50". */
+/**
+ * Formats a stored price for display: ("1299.5", "USD") → "$1,299.50". The
+ * currency can also be a bare symbol when the code wasn't knowable, e.g.
+ * ("20", "kr") → "20 kr"; ("20", "$") → "$20".
+ */
 export function formatPrice(price: string, currency: string): string {
   if (!price) return '';
   const n = Number(price);
   if (!Number.isFinite(n)) return price;
-  if (currency) {
+  if (/^[A-Z]{3}$/.test(currency)) {
     try {
       return new Intl.NumberFormat(undefined, { style: 'currency', currency }).format(n);
     } catch {
@@ -37,5 +41,7 @@ export function formatPrice(price: string, currency: string): string {
     }
   }
   const s = new Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(n);
-  return currency ? `${s} ${currency}` : s;
+  if (!currency) return s;
+  // codes and letter symbols ("kr", "zł", "CHF") go after the number; signs like "$" before
+  return /[A-Za-z]$/.test(currency) ? `${s} ${currency}` : `${currency}${s}`;
 }

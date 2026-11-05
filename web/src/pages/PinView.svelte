@@ -8,6 +8,7 @@
   import Tag from '@lucide/svelte/icons/tag';
   import { api, ApiError } from '../lib/api';
   import { domain, formatDate, formatDateTime, formatPrice } from '../lib/format';
+  import { currencyHints, tidyPrice } from '../lib/currency';
   import { closeModal, navigate } from '../lib/router.svelte';
   import { emitPin, loadBoards, myBoards, toast, toastError } from '../lib/session.svelte';
   import type { Pin } from '../lib/types';
@@ -37,6 +38,13 @@
       });
   });
 
+  const fallbackCurrency = $derived(currencyHints(form.source_url)[0]);
+
+  function cleanPrice() {
+    const t = tidyPrice(form.price, form.currency, currencyHints(form.source_url));
+    if (t) ({ price: form.price, currency: form.currency } = t);
+  }
+
   function startEdit() {
     if (!pin) return;
     form = {
@@ -54,6 +62,8 @@
   async function save(e: SubmitEvent) {
     e.preventDefault();
     if (!pin) return;
+    cleanPrice();
+    if (form.price.trim() && !form.currency.trim()) form.currency = fallbackCurrency;
     busy = true;
     try {
       const moved = form.board_id !== pin.board_id;
@@ -139,11 +149,11 @@
           <div class="price-row">
             <label class="field">
               <span>Price when saved</span>
-              <input class="input" inputmode="decimal" bind:value={form.price} placeholder="e.g. 24.99" />
+              <input class="input" bind:value={form.price} onblur={cleanPrice} placeholder="e.g. 24.99" />
             </label>
             <label class="field cur">
               <span>Currency</span>
-              <input class="input" bind:value={form.currency} maxlength="3" placeholder="USD" />
+              <input class="input" bind:value={form.currency} maxlength="4" placeholder={fallbackCurrency} title="A code like USD, or a symbol" />
             </label>
           </div>
           <button type="button" class="btn small replace" disabled={busy} onclick={() => fileInput?.click()}>

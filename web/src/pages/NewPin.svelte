@@ -5,6 +5,7 @@
   import Check from '@lucide/svelte/icons/check';
   import { api } from '../lib/api';
   import { domain } from '../lib/format';
+  import { currencyHints, parsePrice, tidyPrice } from '../lib/currency';
   import { navigate, router } from '../lib/router.svelte';
   import { emitPin, loadBoards, myBoards, toast, toastError } from '../lib/session.svelte';
   import type { Board, ScrapedPage } from '../lib/types';
@@ -31,9 +32,20 @@
   let title = $state(params.get('title') ?? '');
   let description = $state('');
   let sourceUrl = $state(params.get('url') ?? '');
-  // price as seen on the product page right now (from the bookmarklet or the scraper)
-  let price = $state(params.get('price') ?? '');
-  let currency = $state((params.get('currency') ?? '').toUpperCase().slice(0, 3));
+  // price as seen on the product page right now (from the bookmarklet or the scraper).
+  // The bookmarklet may send raw page text like "$20.23"; the page's language and
+  // the site's country help decide which dollar (or yen, or krona) that is.
+  const pageLang = params.get('lang') ?? '';
+  const fromPage = parsePrice(params.get('price') ?? '', params.get('currency') ?? '', currencyHints(params.get('url') ?? '', pageLang));
+  let price = $state(fromPage.amount);
+  let currency = $state(fromPage.currency);
+  // used when a price has no currency: the site's, else the user's own
+  const fallbackCurrency = $derived(currencyHints(sourceUrl, pageLang)[0]);
+
+  function cleanPrice() {
+    const t = tidyPrice(price, currency, currencyHints(sourceUrl, pageLang));
+    if (t) ({ price, currency } = t);
+  }
 
   let creatingBoard = $state(false);
   let saving = $state(false);
@@ -160,6 +172,8 @@
     if (!hasImage || !boardId) return;
     saving = true;
     localStorage.setItem(LAST_BOARD, boardId);
+    cleanPrice();
+    if (price.trim() && !currency.trim()) currency = fallbackCurrency;
     const base = () => {
       const fd = new FormData();
       fd.append('board_id', boardId);
@@ -352,11 +366,11 @@
         <div class="price-row">
           <label class="field">
             <span>Price</span>
-            <input class="input" inputmode="decimal" bind:value={price} placeholder="Optional, e.g. 24.99" />
+            <input class="input" bind:value={price} onblur={cleanPrice} placeholder="Optional, e.g. 24.99" />
           </label>
           <label class="field cur">
             <span>Currency</span>
-            <input class="input" bind:value={currency} maxlength="3" placeholder="USD" />
+            <input class="input" bind:value={currency} maxlength="4" placeholder={fallbackCurrency} title="A code like USD, or a symbol" />
           </label>
         </div>
         {#if price && scraped?.price}<p class="hint muted">Price found on {domain(scraped.url)}, saved as it is today.</p>{/if}

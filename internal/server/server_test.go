@@ -206,3 +206,20 @@ func TestFlow(t *testing.T) {
 		t.Fatalf("deleted pin image still served: %d", resp.StatusCode)
 	}
 }
+
+func TestCurrencyValidation(t *testing.T) {
+	for in, want := range map[string]string{"usd": "USD", "EUR": "EUR", "$": "$", "kr": "kr", "CA$": "CA$", "": ""} {
+		c := in
+		f := pinFields{Currency: &c}
+		if msg := f.validate(); msg != "" || c != want {
+			t.Errorf("%q: got %q (%s), want %q", in, c, msg, want)
+		}
+	}
+	for _, in := range []string{"dollars", "12", "<b>", "US D"} {
+		c := in
+		f := pinFields{Currency: &c}
+		if f.validate() == "" {
+			t.Errorf("%q: expected an error", in)
+		}
+	}
+}
