@@ -9,7 +9,7 @@ COPY web/ ./
 RUN npm run build
 
 # ---- backend (pure Go, cross-compiled; no CGO needed for SQLite) ----
-FROM --platform=$BUILDPLATFORM golang:1.26-alpine AS server
+FROM --platform=$BUILDPLATFORM golang:1.27-alpine AS server
 ARG TARGETOS TARGETARCH
 ARG VERSION=dev
 WORKDIR /src
