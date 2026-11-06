@@ -241,7 +241,9 @@ async function pinToCork(origin: string) {
   }
 
   // The picker lives in a shadow root so the page's CSS can't reach it. It's built
-  // without innerHTML or style attributes, which strict sites block.
+  // without innerHTML or style attributes, which strict sites block. The host is
+  // the one element the page can still style, and its rules beat :host unless
+  // they're !important: Shopify themes hide it with div:empty{display:none}.
   const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string) => {
     const e = document.createElement(tag);
     e.className = cls;
@@ -253,7 +255,7 @@ async function pinToCork(origin: string) {
   const root = host.attachShadow({ mode: 'open' });
   const sheet = new CSSStyleSheet();
   sheet.replaceSync(
-    ':host{all:initial;position:fixed;inset:0;z-index:2147483647}' +
+    ':host{all:initial!important;display:block!important;position:fixed!important;inset:0!important;z-index:2147483647!important}' +
       '.back{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:#0009;font:15px/1.4 system-ui,sans-serif;color-scheme:light dark}' +
       '.box{display:flex;flex-direction:column;gap:14px;width:min(860px,100%);max-height:100%;box-sizing:border-box;padding:20px;border-radius:16px;background:Canvas;color:CanvasText;box-shadow:0 12px 48px #0008}' +
       'h2{margin:0;font-size:18px}' +
