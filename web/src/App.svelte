@@ -7,6 +7,7 @@
   import TopBar from './components/TopBar.svelte';
   import Modal from './components/Modal.svelte';
   import Toasts from './components/Toasts.svelte';
+  import ImportProgress from './components/ImportProgress.svelte';
   import Login from './pages/Login.svelte';
   import Boards from './pages/Boards.svelte';
   import AllPins from './pages/AllPins.svelte';
@@ -142,6 +143,7 @@
   {/if}
 {/if}
 
+<ImportProgress />
 <Toasts />
 
 <style>

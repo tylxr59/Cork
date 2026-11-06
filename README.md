@@ -39,6 +39,7 @@ Cork is a Pinterest-style board for your own server. Save images from your compu
 | 🔖 **Bookmarklet**            | "Pin to Cork" in your bookmarks bar pins from whatever page you're on.                           |
 | 🏷️ **Prices**                 | Pins from shop pages save the product's price as it was the day you pinned it.                   |
 | 📥 **Upload, paste or drop**  | Paste an image from the clipboard, drop files, or upload several images at once.                 |
+| 🗃️ **Mass import**            | Drop a pile of images or a whole folder on a board and each one becomes a pin.                   |
 | 👥 **Multiple users**         | Each user has their own private boards. Admins manage accounts and sign-ups.                     |
 | 🔗 **Public boards**          | Share a board with a link. Visitors can view it without an account.                              |
 | 🔎 **Search**                 | Searches pin titles, descriptions, links and board names.                                        |

@@ -5,8 +5,10 @@
   import Globe from '@lucide/svelte/icons/globe';
   import Lock from '@lucide/svelte/icons/lock';
   import LinkIcon from '@lucide/svelte/icons/link';
+  import Upload from '@lucide/svelte/icons/upload';
   import { api, ApiError } from '../lib/api';
   import { plural } from '../lib/format';
+  import { droppedFiles, importFiles } from '../lib/imports.svelte';
   import { navigate } from '../lib/router.svelte';
   import { loadBoards, onPinEvent, toast, toastError } from '../lib/session.svelte';
   import type { Board, Pin } from '../lib/types';
@@ -19,6 +21,12 @@
   let pins = $state<Pin[]>([]);
   let notFound = $state(false);
   let editing = $state(false);
+  let dropping = $state(false);
+  let fileInput: HTMLInputElement | undefined = $state();
+  // dragenter/dragleave fire for every child crossed; the overlay goes when they balance
+  let dragDepth = 0;
+  // set while dragging something from this page, like a pin being reordered
+  let draggingOwn = false;
 
   $effect(() => {
     const boardId = id;
@@ -38,6 +46,9 @@
 
   $effect(() =>
     onPinEvent((e) => {
+      if (e.type === 'created' && e.pin.board_id === id && !pins.some((p) => p.id === e.pin.id)) {
+        pins = [e.pin, ...pins];
+      }
       if (e.type === 'deleted') pins = pins.filter((p) => p.id !== e.id);
       if (e.type === 'updated') {
         if (e.pin.board_id !== id) pins = pins.filter((p) => p.id !== e.pin.id);
@@ -45,6 +56,34 @@
       }
     }),
   );
+
+  const carriesFiles = (e: DragEvent) => !!board?.can_edit && !draggingOwn && !!e.dataTransfer?.types.includes('Files');
+
+  function onDragEnter(e: DragEvent) {
+    if (!carriesFiles(e)) return;
+    dragDepth++;
+    dropping = true;
+  }
+
+  function onDragOver(e: DragEvent) {
+    if (carriesFiles(e)) e.preventDefault();
+  }
+
+  function onDragLeave(e: DragEvent) {
+    if (carriesFiles(e) && --dragDepth <= 0) stopDropping();
+  }
+
+  function stopDropping() {
+    dragDepth = 0;
+    dropping = false;
+  }
+
+  async function onDrop(e: DragEvent) {
+    if (!carriesFiles(e)) return;
+    e.preventDefault();
+    stopDropping();
+    importFiles(id, await droppedFiles(e.dataTransfer!));
+  }
 
   function reorder(next: Pin[]) {
     pins = next;
@@ -85,6 +124,14 @@
   }
 </script>
 
+<svelte:window
+  ondragstart={() => (draggingOwn = true)}
+  ondragend={() => (draggingOwn = false)}
+  ondragenter={onDragEnter}
+  ondragover={onDragOver}
+  ondragleave={onDragLeave}
+  ondrop={onDrop}
+/>
 <svelte:head><title>{board ? `${board.name} · Cork` : 'Cork'}</title></svelte:head>
 
 <div class="page">
@@ -123,6 +170,20 @@
       {#if board.can_edit}
         <div class="actions">
           <a class="btn primary add" href="/new?board={board.id}"><Plus size={18} /> <span>Add pin</span></a>
+          <button class="btn" onclick={() => fileInput?.click()} title="Add lots of images at once, or drop them anywhere on this page">
+            <Upload size={16} /> <span>Import</span>
+          </button>
+          <input
+            bind:this={fileInput}
+            type="file"
+            accept="image/jpeg,image/png,image/gif,image/webp"
+            multiple
+            hidden
+            onchange={(e) => {
+              if (e.currentTarget.files) importFiles(id, [...e.currentTarget.files]);
+              e.currentTarget.value = '';
+            }}
+          />
           <button class="btn" onclick={() => (editing = true)}><Pencil size={16} /> <span>Edit</span></button>
           <button class="btn" onclick={togglePublic} title={board.is_public ? 'Make private' : 'Make public'}>
             {#if board.is_public}<Lock size={16} /> <span>Make private</span>{:else}<Globe size={16} /> <span>Make public</span>{/if}
@@ -142,6 +203,7 @@
         <h2>This board is empty</h2>
         {#if board.can_edit}
           <a class="btn primary" href="/new?board={board.id}"><Plus size={18} /> Add the first pin</a>
+          <p class="muted">Or drop a pile of images or a folder anywhere on this page.</p>
         {/if}
       </div>
     {:else}
@@ -149,6 +211,14 @@
     {/if}
   {/if}
 </div>
+
+{#if dropping}
+  <div class="dropzone" aria-hidden="true">
+    <Upload size={40} />
+    <strong>Drop to add to {board?.name}</strong>
+    <span>Each image becomes a pin. Folders work too.</span>
+  </div>
+{/if}
 
 {#if editing && board}
   <BoardForm
@@ -162,6 +232,26 @@
 {/if}
 
 <style>
+  .dropzone {
+    position: fixed;
+    inset: 12px;
+    z-index: 120;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 3px dashed var(--accent);
+    border-radius: var(--radius-xl);
+    background: var(--accent-soft);
+    color: var(--text);
+    text-align: center;
+    /* the overlay must not become the drag target, or it flickers */
+    pointer-events: none;
+  }
+  .dropzone :global(svg) {
+    color: var(--accent);
+  }
   .hero {
     display: flex;
     align-items: center;
