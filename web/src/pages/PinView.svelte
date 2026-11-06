@@ -6,6 +6,7 @@
   import ImageUp from '@lucide/svelte/icons/image-up';
   import LinkIcon from '@lucide/svelte/icons/link';
   import Tag from '@lucide/svelte/icons/tag';
+  import Lightbox from '../components/Lightbox.svelte';
   import { api, ApiError } from '../lib/api';
   import { domain, formatDate, formatDateTime, formatPrice } from '../lib/format';
   import { currencyHints, tidyPrice } from '../lib/currency';
@@ -18,6 +19,7 @@
   let pin = $state<Pin | null>(null);
   let notFound = $state(false);
   let editing = $state(false);
+  let expanded = $state(false);
   let busy = $state(false);
   let form = $state({ title: '', description: '', source_url: '', board_id: '', price: '', currency: '' });
   let fileInput: HTMLInputElement | undefined = $state();
@@ -29,6 +31,7 @@
     pin = null;
     notFound = false;
     editing = false;
+    expanded = false;
     api
       .pin(pinId)
       .then((p) => (pin = p))
@@ -119,9 +122,12 @@
   <div class="spinner"></div>
 {:else}
   <div class="pin-view" class:modal class:page-card={!modal}>
-    <a class="image" href={pin.image_url} target="_blank" rel="noopener" title="Open full size" style:background={pin.color || 'var(--surface-2)'}>
+    <button type="button" class="image" aria-label="Expand image" title="Expand" style:background={pin.color || 'var(--surface-2)'} onclick={() => (expanded = true)}>
       <img src={pin.image_url} alt={pin.title} width={pin.width} height={pin.height} />
-    </a>
+    </button>
+    {#if expanded}
+      <Lightbox src={pin.image_url} alt={pin.title} onclose={() => (expanded = false)} />
+    {/if}
 
     <div class="body">
       {#if editing}
@@ -238,6 +244,9 @@
   .image {
     display: flex;
     justify-content: center;
+    width: 100%;
+    padding: 0;
+    border: none;
     cursor: zoom-in;
   }
   .image img {
