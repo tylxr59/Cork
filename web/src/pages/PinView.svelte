@@ -10,7 +10,7 @@
   import { api, ApiError } from '../lib/api';
   import { domain, formatDate, formatDateTime, formatPrice } from '../lib/format';
   import { currencyHints, tidyPrice } from '../lib/currency';
-  import { closeModal, navigate } from '../lib/router.svelte';
+  import { closeModal, navigate, router } from '../lib/router.svelte';
   import { emitPin, loadBoards, myBoards, toast, toastError } from '../lib/session.svelte';
   import type { Pin } from '../lib/types';
 
@@ -34,7 +34,11 @@
     expanded = false;
     api
       .pin(pinId)
-      .then((p) => (pin = p))
+      .then((p) => {
+        pin = p;
+        // the Edit button on a pin card links here with ?edit
+        if (p.can_edit && router.current.query.has('edit')) startEdit();
+      })
       .catch((e) => {
         if (e instanceof ApiError && e.status === 404) notFound = true;
         else toastError(e);
@@ -121,8 +125,8 @@
 {:else if !pin}
   <div class="spinner"></div>
 {:else}
-  <div class="pin-view" class:modal class:page-card={!modal}>
-    <button type="button" class="image" aria-label="Expand image" title="Expand" style:background={pin.color || 'var(--surface-2)'} onclick={() => (expanded = true)}>
+  <div class="pin-view" class:modal class:editing class:page-card={!modal}>
+    <button type="button" class="image" aria-label="Expand image" title="Expand" onclick={() => (expanded = true)}>
       <img src={pin.image_url} alt={pin.title} width={pin.width} height={pin.height} />
     </button>
     {#if expanded}
@@ -247,6 +251,7 @@
     width: 100%;
     padding: 0;
     border: none;
+    background: var(--side);
     cursor: zoom-in;
   }
   .image img {
@@ -255,13 +260,17 @@
     object-fit: contain;
   }
   .modal .image img {
-    max-height: 70vh;
+    max-height: 60vh;
+  }
+  /* keep the form in view while editing */
+  .modal.editing .image img {
+    max-height: 28vh;
   }
   .body {
-    padding: 22px 26px 30px;
+    padding: 14px 18px 18px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     min-width: 0;
   }
 
@@ -269,10 +278,9 @@
   .page-card {
     flex-direction: row;
     background: var(--surface);
+    border: 1px solid var(--border);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow);
     overflow: hidden;
-    margin-top: 4px;
   }
   .page-card .image {
     flex: 1.2;
@@ -284,7 +292,7 @@
   }
   .page-card .body {
     flex: 1;
-    padding: 28px;
+    padding: 20px;
   }
 
   .toolbar {
@@ -299,21 +307,20 @@
     flex: 1;
   }
   h1 {
-    font-size: 1.75rem;
+    font-size: 1.375rem;
     overflow-wrap: anywhere;
   }
   .desc {
     white-space: pre-line;
     overflow-wrap: anywhere;
-    color: var(--text-2);
   }
   .price {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 14px 16px;
+    gap: 12px;
+    padding: 10px 12px;
     border-radius: var(--radius);
-    background: var(--accent-soft);
+    background: var(--surface-2);
     color: var(--accent);
   }
   .price div {
@@ -322,34 +329,34 @@
     line-height: 1.25;
   }
   .price strong {
-    font-size: 1.35rem;
-    font-weight: 800;
+    font-size: 1rem;
+    font-weight: 650;
     color: var(--text);
     font-variant-numeric: tabular-nums;
   }
   .price small {
     color: var(--text-2);
-    font-size: 0.8rem;
+    font-size: 0.75rem;
   }
   .src {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 14px;
-    border-radius: var(--radius);
-    background: var(--surface-2);
     min-width: 0;
   }
-  .src:hover {
-    background: var(--surface-3);
+  .src:hover strong {
+    text-decoration: underline;
+  }
+  .src strong {
+    font-weight: 550;
   }
   .src-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 12px;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
     display: grid;
     place-items: center;
-    background: var(--surface);
+    background: var(--surface-2);
     flex-shrink: 0;
   }
   .src-text {
@@ -360,6 +367,7 @@
   }
   .src-text small {
     color: var(--text-2);
+    font-size: 0.75rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -367,28 +375,24 @@
   .meta {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
   }
   .meta > * {
-    padding: 10px 12px;
-    border-radius: 16px;
-    background: var(--surface-2);
     min-width: 0;
   }
-  .meta a:hover {
-    background: var(--surface-3);
+  .meta a:hover b {
+    text-decoration: underline;
   }
   .meta small {
     display: block;
-    font-size: 0.68rem;
-    font-weight: 750;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
+    font-size: 0.75rem;
     color: var(--text-2);
   }
   .meta b {
     display: block;
-    font-size: 0.875rem;
+    font-weight: 550;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -423,13 +427,13 @@
       flex-direction: column;
     }
     .page-card .image img {
-      max-height: 70vh;
+      max-height: 60vh;
     }
   }
   @media (max-width: 480px) {
     .body,
     .page-card .body {
-      padding: 18px 16px 28px;
+      padding: 14px 14px 24px;
     }
     .meta {
       grid-template-columns: 1fr 1fr;

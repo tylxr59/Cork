@@ -1,9 +1,11 @@
 <script lang="ts">
+  import ExternalLink from '@lucide/svelte/icons/external-link';
   import LinkIcon from '@lucide/svelte/icons/link';
+  import Pencil from '@lucide/svelte/icons/pencil';
   import { domain, formatPrice } from '../lib/format';
   import type { Pin } from '../lib/types';
 
-  let { pin, showBoard = false }: { pin: Pin; showBoard?: boolean } = $props();
+  let { pin, showBoard = false, canEdit = false }: { pin: Pin; showBoard?: boolean; canEdit?: boolean } = $props();
 
   let loaded = $state(false);
   const host = $derived(domain(pin.source_url));
@@ -26,6 +28,18 @@
     />
     {#if price}<span class="price">{price}</span>{/if}
   </a>
+  {#if canEdit || pin.source_url}
+    <div class="actions">
+      {#if canEdit}
+        <a href="/p/{pin.id}?edit" data-modal aria-label="Edit pin" title="Edit"><Pencil size={15} /></a>
+      {/if}
+      {#if pin.source_url}
+        <a href={pin.source_url} target="_blank" rel="noopener noreferrer nofollow" aria-label="Visit site" title="Visit site">
+          <ExternalLink size={15} />
+        </a>
+      {/if}
+    </div>
+  {/if}
   {#if pin.title || host || showBoard}
     <div class="meta">
       {#if pin.title}<a class="title" href="/p/{pin.id}" data-modal>{pin.title}</a>{/if}
@@ -43,18 +57,20 @@
 </article>
 
 <style>
+  /* One object: the picture and its label share a card. */
   .pin {
-    border-radius: var(--radius-lg);
+    position: relative;
+    border-radius: var(--radius);
     overflow: hidden;
-    background: var(--surface);
-    box-shadow: var(--shadow);
+    background: var(--side);
+    box-shadow: 0 0 0 0.5px var(--hairline);
     transition:
-      transform 0.2s,
-      box-shadow 0.2s;
+      transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1),
+      box-shadow 0.16s;
   }
   .pin:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
   }
   .media {
     display: block;
@@ -71,27 +87,52 @@
   }
   .price {
     position: absolute;
-    left: 10px;
-    bottom: 10px;
-    padding: 5px 11px;
+    left: 8px;
+    bottom: 8px;
+    padding: 3px 8px;
     border-radius: 999px;
-    background: rgb(255 255 255 / 92%);
-    color: #1f1d2b;
-    font-size: 0.8rem;
-    font-weight: 800;
+    background: #fff;
+    color: #1c1b1a;
+    font-size: 0.78rem;
+    font-weight: 600;
     font-variant-numeric: tabular-nums;
-    box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
+    box-shadow: 0 1px 4px rgb(0 0 0 / 25%);
+  }
+  .actions {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.12s;
+  }
+  .pin:hover .actions,
+  .pin:focus-within .actions {
+    opacity: 1;
+  }
+  .actions a {
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: #fff;
+    color: #1c1b1a;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 28%);
+  }
+  .actions a:hover {
+    background: #f0ece6;
   }
   .meta {
-    padding: 11px 14px 13px;
+    padding: 9px 12px 10px;
     display: flex;
     flex-direction: column;
-    gap: 3px;
+    gap: 2px;
   }
   .title {
-    font-weight: 700;
+    font-size: 0.875rem;
+    font-weight: 600;
     line-height: 1.3;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -110,7 +151,7 @@
   .src {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     min-width: 0;
   }
   .src :global(svg) {
@@ -124,7 +165,7 @@
   }
   .board {
     margin-left: auto;
-    font-weight: 650;
+    font-weight: 550;
     flex-shrink: 1;
   }
   .src:hover,
@@ -136,7 +177,10 @@
   @media (hover: none) {
     .pin:hover {
       transform: none;
-      box-shadow: var(--shadow);
+      box-shadow: 0 0 0 0.5px var(--hairline);
+    }
+    .actions {
+      display: none;
     }
   }
 </style>

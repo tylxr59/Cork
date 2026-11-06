@@ -79,16 +79,16 @@
     align-items: flex-end;
     justify-content: space-between;
     gap: 16px;
-    margin: 4px 0 24px;
+    margin: 0 0 20px;
   }
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(240px, calc(50% - 8px)), 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(min(200px, calc(50% - 8px)), 1fr));
+    gap: 30px 22px;
   }
   @media (max-width: 520px) {
     .grid {
-      gap: 12px;
+      gap: 20px 12px;
     }
   }
   .grid :global(.board) {

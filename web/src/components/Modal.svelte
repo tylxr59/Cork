@@ -41,7 +41,7 @@
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
 <div class="backdrop" class:panel onclick={(e) => e.target === e.currentTarget && onclose()}>
   <div class="box" bind:this={box} role="dialog" aria-modal="true" aria-label={label} tabindex="-1">
-    <button class="close" aria-label="Close" onclick={onclose}><X size={20} /></button>
+    <button class="close" aria-label="Close" onclick={onclose}><X size={17} /></button>
     {@render children()}
   </div>
 </div>
@@ -63,9 +63,7 @@
     position: fixed;
     inset: 0;
     background: var(--scrim);
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
-    animation: fade 0.18s ease-out;
+    animation: fade 0.16s ease-out;
   }
   .box {
     position: relative;
@@ -74,27 +72,29 @@
     background: var(--surface);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
-    padding: 30px;
-    animation: rise 0.2s ease-out;
+    padding: 24px;
+    animation: rise 0.2s cubic-bezier(0.2, 0.9, 0.25, 1);
     outline: none;
   }
   .close {
     position: absolute;
-    top: 14px;
-    right: 14px;
+    top: 10px;
+    right: 10px;
     z-index: 3;
-    width: 40px;
-    height: 40px;
+    width: 30px;
+    height: 30px;
     border-radius: 50%;
     border: none;
     display: grid;
     place-items: center;
-    background: var(--glass-strong);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    background: var(--surface-2);
     color: var(--text);
-    box-shadow: var(--shadow-sm);
     cursor: pointer;
+  }
+  /* sits on top of the picture */
+  .panel .close {
+    background: rgb(0 0 0 / 55%);
+    color: #fff;
   }
 
   /* centered panel */
@@ -109,6 +109,7 @@
     padding: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
+    scrollbar-width: thin;
   }
 
   @keyframes fade {
@@ -119,7 +120,7 @@
   @keyframes rise {
     from {
       opacity: 0;
-      transform: translateY(14px);
+      transform: scale(0.97);
     }
   }
 

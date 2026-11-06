@@ -36,8 +36,8 @@
 </script>
 
 <div class="wrap">
-  <form class="glass panel" onsubmit={submit}>
-    <img src="/favicon.svg" alt="" width="56" height="56" />
+  <form class="panel" onsubmit={submit}>
+    <img src="/favicon.svg" alt="" width="52" height="52" />
     {#if session.needsSetup}
       <h1>Welcome to Cork</h1>
       <p class="muted">Create the first account. It becomes the admin for this Cork.</p>
@@ -87,21 +87,24 @@
     display: grid;
     place-items: center;
     padding: 24px;
+    background: var(--side);
   }
   form {
     width: 100%;
-    max-width: 400px;
-    padding: 40px 32px 32px;
-    box-shadow: var(--shadow-lg);
+    max-width: 340px;
+    padding: 30px 26px 22px;
+    border: none;
+    box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     text-align: center;
   }
   form img {
     margin: 0 auto 4px;
-    border-radius: 16px;
-    box-shadow: var(--shadow-accent);
+  }
+  h1 {
+    font-size: 1.375rem;
   }
   .field {
     text-align: left;
