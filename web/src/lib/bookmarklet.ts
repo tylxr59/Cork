@@ -7,7 +7,7 @@
 //
 // This function is serialised with toString(), so it must be self-contained:
 // no imports, no references to anything outside its own body.
-function pinToCork(origin: string) {
+async function pinToCork(origin: string) {
   const q = (s: string) => document.querySelector(s);
   const meta = (n: string) =>
     (q('meta[property="' + n + '"],meta[name="' + n + '"]') as HTMLMetaElement | null)?.content?.trim() || '';
@@ -102,7 +102,8 @@ function pinToCork(origin: string) {
 
   // 6. scan the page for the most prominent price-looking text
   // (not on Reddit, where the only prices are in its ads and comments)
-  if (!price && !q('shreddit-app')) {
+  const reddit = /(^|\.)reddit\.com$/.test(location.hostname);
+  if (!price && !reddit) {
     const bad = /was|old|list|strike|compare|original|regular|before|saving|save|ship|deliver|instal|month|unit|coupon|rrp|msrp|reward|points/i;
     const els = document.body.getElementsByTagName('*');
     let best = 0;
@@ -172,10 +173,29 @@ function pinToCork(origin: string) {
 
   // Reddit: the post's own images, as originals. Every gallery image appears as
   // both a preview.redd.it and an i.redd.it URL, and this makes them the same.
-  for (const e of document.querySelectorAll('shreddit-post gallery-carousel figure img, shreddit-post img#post-image')) {
+  // The old design, which www.reddit.com also serves if it's set in your account,
+  // only has small previews of a gallery, but they carry the same IDs.
+  for (const e of document.querySelectorAll(
+    'shreddit-post gallery-carousel figure img, shreddit-post img#post-image, #siteTable .media-gallery .gallery-tile img'
+  )) {
     const src = e.getAttribute('src') || e.getAttribute('data-lazy-src') || '';
     const id = src.match(/^https:\/\/preview\.redd\.it\/(?:[^/?]*-)?([a-z0-9]+\.[a-z]+)(?:\?|$)/i);
     add(id ? 'https://i.redd.it/' + id[1] : src);
+  }
+
+  // Anything else on the old design, like single images, comes from the post's data.
+  const post = location.pathname.match(/\/comments\/(\w+)/);
+  if (reddit && post && !images.length && !q('shreddit-app')) {
+    try {
+      const res = await fetch('/comments/' + post[1] + '.json');
+      const listing = (await res.json())[0].data.children[0].data;
+      const data = listing.crosspost_parent_list?.[0] || listing;
+      for (const { media_id } of data.gallery_data?.items || []) {
+        const type = data.media_metadata?.[media_id]?.m || '';
+        if (type.startsWith('image/')) add('https://i.redd.it/' + media_id + '.' + type.slice(6));
+      }
+      if (!images.length && /^https:\/\/i\.redd\.it\//.test(data.url)) add(data.url);
+    } catch (e) {}
   }
 
   // anywhere else: the page's declared image, then what's on screen, biggest first
@@ -317,6 +337,7 @@ function pinToCork(origin: string) {
 }
 
 export function bookmarkletHref(origin: string): string {
-  const code = '(' + pinToCork.toString() + ')(' + JSON.stringify(origin) + ')';
+  // void, because a javascript: URL that returns a value can replace the page with it
+  const code = 'void (' + pinToCork.toString() + ')(' + JSON.stringify(origin) + ')';
   return 'javascript:' + encodeURIComponent(code.replace(/\n\s*/g, '\n'));
 }

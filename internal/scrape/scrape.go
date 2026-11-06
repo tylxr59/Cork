@@ -109,7 +109,9 @@ func (c *Client) FetchImage(ctx context.Context, rawURL string, maxBytes int64) 
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.get(ctx, u, "image/avif;q=0.1,image/webp,image/png,image/jpeg,image/gif,image/*;q=0.8")
+	// Only list formats imaging can decode: some CDNs, like Amazon's, send AVIF to
+	// anything that accepts it, however low the q value.
+	resp, err := c.get(ctx, u, "image/webp,image/png,image/jpeg,image/gif")
 	if err != nil {
 		return nil, err
 	}

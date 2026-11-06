@@ -1,7 +1,10 @@
 package scrape
 
 import (
+	"context"
 	"net"
+	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"strings"
 	"testing"
@@ -73,5 +76,21 @@ func TestNormalizePrice(t *testing.T) {
 		if got := NormalizePrice(in); got != want {
 			t.Errorf("NormalizePrice(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestFetchImageDoesNotAcceptAVIF(t *testing.T) {
+	var accept string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		accept = r.Header.Get("Accept")
+		w.Write([]byte("image"))
+	}))
+	defer srv.Close()
+
+	if _, err := NewClient(true).FetchImage(context.Background(), srv.URL, 1<<20); err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(accept, "avif") || strings.Contains(accept, "*") {
+		t.Errorf("Accept %q allows a format Cork can't decode", accept)
 	}
 }
