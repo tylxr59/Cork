@@ -159,7 +159,7 @@
 
 <style>
   section {
-    padding: 26px;
+    padding: 20px;
     margin-bottom: 20px;
     display: flex;
     flex-direction: column;

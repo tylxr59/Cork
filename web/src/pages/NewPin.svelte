@@ -362,7 +362,7 @@
         </div>
       </section>
 
-      <section class="right glass panel">
+      <section class="right">
         <label class="field">
           <span>Board</span>
           <div class="url-row">
@@ -419,7 +419,7 @@
   .layout {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(280px, 400px);
-    gap: 32px;
+    gap: 24px;
     align-items: start;
   }
   .left,
@@ -431,7 +431,6 @@
   .right {
     position: sticky;
     top: calc(var(--topbar-h) + 8px);
-    padding: 22px;
   }
   .price-row {
     display: flex;
@@ -449,27 +448,25 @@
     margin-top: -8px;
   }
   .drop {
-    border: 2px dashed var(--border);
-    border-radius: var(--radius-xl);
-    background: var(--glass);
+    border-radius: var(--radius-lg);
+    background: var(--surface-2);
     min-height: 320px;
     display: flex;
     flex-direction: column;
     align-items: stretch;
     justify-content: center;
     transition:
-      border-color 0.15s,
-      background 0.15s;
+      box-shadow 0.12s,
+      background 0.12s;
   }
   .drop.dragging {
-    border-color: var(--accent);
+    box-shadow: inset 0 0 0 2px var(--accent);
     background: var(--accent-soft);
   }
   .pick :global(svg) {
     color: var(--accent);
   }
   .drop.has {
-    border-style: solid;
     padding: 12px;
   }
   .pick {
@@ -579,13 +576,12 @@
     place-items: center;
   }
   .save {
-    height: 48px;
-    font-size: 1rem;
+    height: 38px;
   }
   .tip summary {
     cursor: pointer;
-    font-weight: 600;
-    font-size: 0.9rem;
+    font-weight: 550;
+    font-size: 0.8125rem;
     color: var(--text-2);
     margin-bottom: 12px;
   }

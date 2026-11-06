@@ -13,6 +13,7 @@
   import { loadBoards, onPinEvent, toast, toastError } from '../lib/session.svelte';
   import type { Board, Pin } from '../lib/types';
   import Masonry from '../components/Masonry.svelte';
+  import PinSizeControl from '../components/PinSizeControl.svelte';
   import BoardForm from '../components/BoardForm.svelte';
 
   let { id }: { id: string } = $props();
@@ -144,14 +145,7 @@
   {:else if !board}
     <div class="spinner"></div>
   {:else}
-    <section class="hero glass panel">
-      {#if pins.length > 0}
-        <div class="covers" aria-hidden="true">
-          {#each pins.slice(0, 3) as p (p.id)}
-            <img src={p.thumb_url} alt="" style:background={p.color} />
-          {/each}
-        </div>
-      {/if}
+    <section class="hero">
       <div class="text">
         <h1>
           {board.name}
@@ -167,8 +161,8 @@
           {#if !board.can_edit}· by {board.owner}{:else if pins.length > 1}· drag pins to reorder{/if}
         </p>
       </div>
-      {#if board.can_edit}
-        <div class="actions">
+      <div class="actions">
+        {#if board.can_edit}
           <a class="btn primary add" href="/new?board={board.id}"><Plus size={18} /> <span>Add pin</span></a>
           <button class="btn" onclick={() => fileInput?.click()} title="Add lots of images at once, or drop them anywhere on this page">
             <Upload size={16} /> <span>Import</span>
@@ -194,8 +188,9 @@
           <button class="btn icon danger" aria-label="Delete board" title="Delete board" onclick={remove}>
             <Trash size={16} />
           </button>
-        </div>
-      {/if}
+        {/if}
+        <PinSizeControl />
+      </div>
     </section>
 
     {#if pins.length === 0}
@@ -207,7 +202,7 @@
         {/if}
       </div>
     {:else}
-      <Masonry {pins} sortable={board.can_edit} onreorder={reorder} />
+      <Masonry {pins} sortable={board.can_edit} canEdit={board.can_edit} onreorder={reorder} />
     {/if}
   {/if}
 </div>
@@ -255,71 +250,50 @@
   .hero {
     display: flex;
     align-items: center;
-    gap: 24px;
-    padding: 24px 28px;
-    margin: 4px 0 24px;
+    gap: 16px;
+    margin: 0 0 22px;
     flex-wrap: wrap;
-  }
-  .covers {
-    display: flex;
-    flex-shrink: 0;
-  }
-  .covers img {
-    width: 64px;
-    height: 64px;
-    border-radius: 18px;
-    object-fit: cover;
-    border: 3px solid var(--surface);
-    margin-left: -16px;
-    box-shadow: var(--shadow-sm);
-  }
-  .covers img:first-child {
-    margin-left: 0;
   }
   .text {
     flex: 1;
     min-width: 220px;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
   }
   h1 {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
-    gap: 6px 12px;
+    gap: 4px 10px;
     overflow-wrap: anywhere;
   }
   .desc {
     white-space: pre-line;
   }
   .meta {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
   }
   .actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    align-items: center;
+    gap: 6px;
   }
-  @media (max-width: 1280px) {
+  @media (max-width: 1180px) {
     .actions {
       width: 100%;
     }
   }
   @media (max-width: 640px) {
     .hero {
-      padding: 18px;
-      gap: 16px;
-    }
-    .covers img {
-      width: 52px;
-      height: 52px;
+      gap: 12px;
     }
     .actions .btn:not(.add) span {
       display: none;
     }
     .actions .btn:not(.add) {
-      width: 44px;
+      width: 40px;
       padding: 0;
     }
     .actions .add {

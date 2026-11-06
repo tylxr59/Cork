@@ -55,9 +55,9 @@
 {/if}
 
 <aside class:open aria-label="Navigation">
-  <div class="side glass">
+  <div class="side">
     <a class="brand" href="/">
-      <img src="/favicon.svg" alt="" width="34" height="34" />
+      <img src="/favicon.svg" alt="" width="26" height="26" />
       <span>Cork</span>
     </a>
 
@@ -100,7 +100,7 @@
 
     <div class="me-wrap">
       {#if menuOpen}
-        <div class="menu glass" role="menu">
+        <div class="menu" role="menu">
           <div class="themes" role="radiogroup" aria-label="Theme">
             {#each themes as t (t.value)}
               <button
@@ -152,72 +152,67 @@
     height: 100vh;
     height: 100dvh;
     width: var(--sidebar-w);
-    padding: 18px 0 18px 18px;
     flex-shrink: 0;
     z-index: 60;
   }
   .side {
     height: 100%;
-    border-radius: 28px;
-    padding: 18px 12px 12px;
+    padding: 14px 10px 10px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    box-shadow: var(--shadow);
+    background: var(--side);
+    border-right: 1px solid var(--border);
     overflow: hidden;
   }
   .brand {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 2px 10px 18px;
-    font-weight: 800;
-    font-size: 1.3rem;
-    letter-spacing: -0.03em;
-  }
-  .brand img {
-    border-radius: 11px;
-    box-shadow: 0 6px 16px rgb(109 93 252 / 35%);
+    gap: 9px;
+    padding: 0 6px 16px;
+    font-weight: 650;
+    font-size: 1rem;
+    letter-spacing: -0.015em;
   }
   .nav {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
   }
   .nav a {
     display: flex;
     align-items: center;
-    gap: 11px;
-    padding: 10px 12px;
-    border-radius: 14px;
-    color: var(--text-2);
-    font-weight: 650;
-    transition: background 0.15s;
+    gap: 9px;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 7px;
+    font-weight: 500;
+    transition: background 0.12s;
   }
-  .nav a:hover {
-    background: var(--glass-strong);
-    color: var(--text);
+  .nav a :global(svg) {
+    color: var(--accent);
   }
-  .nav a.on {
-    background: var(--surface);
-    color: var(--text);
-    box-shadow: var(--shadow-sm);
+  .nav a:hover,
+  .blist a:hover {
+    background: var(--surface-2);
+  }
+  .nav a.on,
+  .blist a.on {
+    background: var(--surface-3);
+    font-weight: 550;
   }
   .label {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 18px 8px 6px 12px;
-    font-size: 0.7rem;
-    font-weight: 750;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    padding: 18px 4px 5px 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
     color: var(--text-2);
   }
   .add {
-    width: 28px;
-    height: 28px;
-    border-radius: 9px;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
     border: none;
     background: transparent;
     color: var(--text-2);
@@ -226,46 +221,37 @@
     cursor: pointer;
   }
   .add:hover {
-    background: var(--glass-strong);
+    background: var(--surface-2);
     color: var(--text);
   }
   .blist {
     flex: 1;
     overflow-y: auto;
-    margin: 0 -4px;
-    padding: 0 4px;
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 1px;
     scrollbar-width: thin;
   }
   .blist a {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 6px 10px 6px 6px;
-    border-radius: 14px;
-    font-weight: 600;
-    font-size: 0.9rem;
-  }
-  .blist a:hover {
-    background: var(--glass-strong);
-  }
-  .blist a.on {
-    background: var(--surface);
-    box-shadow: var(--shadow-sm);
+    gap: 9px;
+    flex-shrink: 0;
+    height: 32px;
+    padding: 0 8px 0 5px;
+    border-radius: 7px;
+    transition: background 0.12s;
   }
   .blist img,
   .ph {
-    width: 36px;
-    height: 36px;
-    border-radius: 11px;
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
     object-fit: cover;
     flex-shrink: 0;
   }
   .ph {
-    background: var(--brand-gradient);
-    opacity: 0.35;
+    background: var(--surface-3);
   }
   .name {
     flex: 1;
@@ -275,55 +261,63 @@
     white-space: nowrap;
   }
   .blist :global(.lock) {
-    color: var(--text-3);
+    color: var(--text-2);
     flex-shrink: 0;
   }
   .blist small {
-    color: var(--text-3);
-    font-weight: 650;
+    color: var(--text-2);
     font-size: 0.78rem;
+    font-weight: 400;
   }
   .empty-board {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin: 4px 6px;
-    padding: 12px;
-    border-radius: 14px;
-    border: 1.5px dashed var(--border);
-    background: none;
+    margin: 4px 0;
+    padding: 8px;
+    border-radius: 7px;
+    border: none;
+    background: var(--surface-2);
     color: var(--text-2);
     font: inherit;
-    font-weight: 650;
+    font-weight: 550;
     cursor: pointer;
   }
   .me-wrap {
     position: relative;
-    padding-top: 10px;
+    padding-top: 6px;
   }
   .me {
     width: 100%;
+    height: 40px;
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px 8px 8px;
-    border-radius: 16px;
+    gap: 9px;
+    padding: 0 8px 0 5px;
+    border-radius: 7px;
     border: none;
-    background: var(--glass-strong);
+    background: none;
     color: var(--text);
     font: inherit;
     text-align: left;
     cursor: pointer;
   }
+  .me:hover {
+    background: var(--surface-2);
+  }
+  .me > :global(svg) {
+    color: var(--text-2);
+  }
   .avatar {
-    width: 34px;
-    height: 34px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #ffc48c, var(--accent-2));
-    color: #fff;
+    background: var(--accent);
+    color: var(--accent-text);
     display: grid;
     place-items: center;
-    font-weight: 800;
+    font-size: 0.75rem;
+    font-weight: 600;
     flex-shrink: 0;
   }
   .who {
@@ -334,39 +328,41 @@
     line-height: 1.2;
   }
   .who strong {
+    font-size: 0.8125rem;
+    font-weight: 550;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   .who small {
     color: var(--text-2);
-    font-size: 0.75rem;
+    font-size: 0.72rem;
   }
   .menu {
     position: absolute;
     left: 0;
     right: 0;
     bottom: calc(100% + 6px);
-    padding: 8px;
-    border-radius: 20px;
-    background: var(--glass-strong);
-    box-shadow: var(--shadow-lg);
+    padding: 5px;
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
-    gap: 2px;
-    animation: pop 0.15s ease-out;
+    gap: 1px;
+    animation: pop 0.14s ease-out;
   }
   .menu a,
   .menu > button {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
-    border-radius: 12px;
+    gap: 9px;
+    height: 30px;
+    padding: 0 8px;
+    border-radius: 6px;
     border: none;
     background: none;
     color: inherit;
     font: inherit;
-    font-weight: 650;
     cursor: pointer;
     text-align: left;
   }
@@ -377,25 +373,24 @@
   .themes {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 4px;
-    padding: 4px;
+    gap: 2px;
+    padding: 2px;
     margin-bottom: 4px;
-    border-radius: 14px;
+    border-radius: 7px;
     background: var(--surface-2);
   }
   .themes button {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    padding: 8px 4px;
+    gap: 1px;
+    padding: 5px 2px;
     border: none;
-    border-radius: 10px;
+    border-radius: 5px;
     background: none;
     color: var(--text-2);
     font: inherit;
-    font-size: 0.75rem;
-    font-weight: 650;
+    font-size: 0.72rem;
     cursor: pointer;
   }
   .themes button.on {
@@ -409,7 +404,7 @@
   @keyframes pop {
     from {
       opacity: 0;
-      transform: translateY(6px);
+      transform: translateY(4px);
     }
   }
 
@@ -421,17 +416,15 @@
       top: 0;
       bottom: 0;
       height: auto;
-      padding: 10px;
-      width: min(300px, 86vw);
+      width: min(280px, 86vw);
       transform: translateX(-105%);
-      transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transition: transform 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
       z-index: 90;
     }
     aside.open {
       transform: none;
     }
-    .side {
-      background: var(--glass-strong);
+    aside.open .side {
       box-shadow: var(--shadow-lg);
     }
     .scrim {
@@ -440,9 +433,7 @@
       inset: 0;
       z-index: 89;
       background: var(--scrim);
-      -webkit-backdrop-filter: blur(3px);
-      backdrop-filter: blur(3px);
-      animation: fade 0.2s ease-out;
+      animation: fade 0.18s ease-out;
     }
   }
   @keyframes fade {

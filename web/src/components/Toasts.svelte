@@ -22,12 +22,12 @@
     pointer-events: none;
   }
   .toast {
-    padding: 12px 20px;
-    border-radius: 999px;
+    padding: 9px 14px;
+    border-radius: var(--radius);
     background: var(--text);
     color: var(--bg);
-    font-weight: 600;
-    box-shadow: var(--shadow-lg);
+    font-weight: 550;
+    box-shadow: var(--shadow);
     animation: pop 0.2s ease-out;
   }
   .toast.error {

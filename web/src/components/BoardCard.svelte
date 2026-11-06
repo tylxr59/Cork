@@ -6,23 +6,19 @@
 
   let { board }: { board: Board } = $props();
 
-  const slots = $derived([0, 1, 2].map((i) => board.covers[i]));
+  const cover = $derived(board.covers[0]);
 </script>
 
 <a class="board" href="/b/{board.id}">
-  <div class="board-cover">
-    {#each slots as c, i (i)}
-      <div class="slot s{i}" style:background={c?.color || 'var(--surface-2)'}>
-        {#if c}<img src={c.url} alt="" loading="lazy" draggable="false" />{/if}
-      </div>
-    {/each}
+  <div class="board-cover" style:background={cover?.color || 'var(--surface-2)'}>
+    {#if cover}<img src={cover.url} alt="" loading="lazy" draggable="false" />{/if}
   </div>
   <div class="info">
     <h3>{board.name}</h3>
     <p>
       <span>{plural(board.pin_count, 'pin')}</span>
       {#if board.is_public}
-        <span class="pill public"><Globe size={11} /> Public</span>
+        <span class="public"><Globe size={12} /> Public</span>
       {:else}
         <Lock size={12} aria-label="Private" />
       {/if}
@@ -31,59 +27,74 @@
 </a>
 
 <style>
+  /* An album: one cover with the rest of the stack peeking out behind it. */
   .board {
+    position: relative;
     display: block;
-    padding: 8px;
-    border-radius: var(--radius-lg);
-    background: var(--surface);
-    box-shadow: var(--shadow);
-    transition:
-      transform 0.2s,
-      box-shadow 0.2s;
+    padding-top: 10px;
   }
-  .board:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+  .board::before,
+  .board::after {
+    content: '';
+    position: absolute;
+    height: 18px;
+    border-radius: 8px 8px 0 0;
+  }
+  .board::before {
+    top: 0;
+    left: 12%;
+    right: 12%;
+    background: color-mix(in srgb, var(--text) 7%, var(--bg));
+  }
+  .board::after {
+    top: 4px;
+    left: 6%;
+    right: 6%;
+    background: color-mix(in srgb, var(--text) 14%, var(--bg));
   }
   .board-cover {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    grid-template-rows: 1fr 1fr;
-    gap: 4px;
-    aspect-ratio: 4 / 3;
-    border-radius: 18px;
+    position: relative;
+    z-index: 1;
+    aspect-ratio: 1;
+    border-radius: var(--radius);
     overflow: hidden;
+    box-shadow: 0 0 0 0.5px var(--hairline);
+    transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-  .slot {
-    overflow: hidden;
+  .board:hover .board-cover {
+    transform: translateY(-2px);
   }
-  .s0 {
-    grid-row: span 2;
-  }
-  .slot img {
+  .board-cover img {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
   .info {
-    padding: 10px 8px 6px;
+    padding-top: 9px;
   }
   h3 {
-    font-size: 1.02rem;
+    font-size: 0.875rem;
+    letter-spacing: -0.01em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
   p {
-    margin-top: 2px;
-    font-size: 0.82rem;
+    font-size: 0.8125rem;
     color: var(--text-2);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
+  }
+  .public {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--accent);
+    font-size: 0.75rem;
   }
   @media (hover: none) {
-    .board:hover {
+    .board:hover .board-cover {
       transform: none;
     }
   }

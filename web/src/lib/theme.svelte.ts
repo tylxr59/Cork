@@ -10,7 +10,7 @@ export const theme = $state<{ pref: ThemePref }>({
 function apply() {
   const dark = theme.pref === 'dark' || (theme.pref === 'system' && media.matches);
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-  document.querySelector('meta[name=theme-color]')?.setAttribute('content', dark ? '#0f0e17' : '#f6f3fb');
+  document.querySelector('meta[name=theme-color]')?.setAttribute('content', dark ? '#1b1a19' : '#ffffff');
 }
 
 export function setTheme(pref: ThemePref) {

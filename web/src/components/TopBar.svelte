@@ -11,9 +11,20 @@
   let { onmenu }: { onmenu?: () => void } = $props();
 
   let q = $state(router.current.path === '/pins' ? (router.current.query.get('q') ?? '') : '');
-  // Tint the bar only once content scrolls under it; at the top the page
-  // gradient should show through untouched.
+  // The bar only gets its hairline once content scrolls under it.
   let scrolled = $state(false);
+  let input: HTMLInputElement | undefined = $state();
+
+  // "/" jumps to search unless the user is typing or a dialog is open.
+  function onKey(e: KeyboardEvent) {
+    if (e.key !== '/' || e.metaKey || e.ctrlKey || e.altKey || !input) return;
+    const el = e.target as HTMLElement;
+    if (el.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(el.tagName)) return;
+    if (document.querySelector('[aria-modal="true"], dialog[open]')) return;
+    e.preventDefault();
+    input.focus();
+    input.select();
+  }
 
   $effect(() => {
     if (router.current.path === '/pins') q = router.current.query.get('q') ?? '';
@@ -31,19 +42,20 @@
   });
 </script>
 
-<svelte:window onscroll={() => (scrolled = window.scrollY > 8)} />
+<svelte:window onscroll={() => (scrolled = window.scrollY > 8)} onkeydown={onKey} />
 
 <div class="topbar" class:public={!session.user} class:scrolled>
   {#if session.user}
     <button class="btn icon menu-btn" aria-label="Open menu" onclick={onmenu}><Menu size={20} /></button>
-    <a class="logo" href="/" aria-label="Cork home"><img src="/favicon.svg" alt="" width="32" height="32" /></a>
-    <form class="search glass" role="search" onsubmit={search}>
-      <Search size={18} />
-      <input type="search" placeholder="Search your pins" bind:value={q} aria-label="Search your pins" />
+    <a class="logo" href="/" aria-label="Cork home"><img src="/favicon.svg" alt="" width="26" height="26" /></a>
+    <form class="search" role="search" onsubmit={search}>
+      <Search size={16} />
+      <input bind:this={input} type="search" placeholder="Search your pins" bind:value={q} aria-label="Search your pins" />
+      <kbd aria-hidden="true">/</kbd>
     </form>
     <a class="btn primary create" href={createHref}><Plus size={18} /> <span>Create pin</span></a>
   {:else}
-    <a class="logo full" href="/"><img src="/favicon.svg" alt="" width="34" height="34" /> <span>Cork</span></a>
+    <a class="logo full" href="/"><img src="/favicon.svg" alt="" width="26" height="26" /> <span>Cork</span></a>
     <span class="grow"></span>
     <button
       class="btn icon"
@@ -63,46 +75,30 @@
     z-index: 40;
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 18px 28px 14px 18px;
+    gap: 10px;
+    height: var(--topbar-h);
+    padding: 0 24px;
+    background: var(--bg);
+    transition: box-shadow 0.15s;
   }
-  /* Blur what scrolls underneath instead of painting a colour over the page
-     gradient (a solid fill shows up as a hard-edged band). */
-  .topbar::before {
-    content: '';
-    position: absolute;
-    inset: 0 0 -12px;
-    z-index: -1;
-    pointer-events: none;
-    -webkit-backdrop-filter: blur(14px);
-    backdrop-filter: blur(14px);
-    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent);
-    mask-image: linear-gradient(to bottom, #000 55%, transparent);
-    opacity: 0;
-    transition: opacity 0.2s;
-  }
-  .topbar.scrolled::before {
-    opacity: 1;
-    background: color-mix(in srgb, var(--bg) 82%, transparent);
-  }
-  .topbar.public {
-    padding-left: 28px;
+  .topbar.scrolled {
+    box-shadow: 0 1px 0 var(--border);
   }
   .search {
     flex: 1;
     display: flex;
     align-items: center;
-    gap: 10px;
-    height: 48px;
-    padding: 0 18px;
-    border-radius: 18px;
+    gap: 8px;
+    height: 34px;
+    padding: 0 6px 0 10px;
+    border-radius: var(--radius-sm);
     color: var(--text-2);
-    background: var(--glass-strong);
-    box-shadow: var(--shadow-sm);
+    background: var(--surface-2);
     min-width: 0;
+    transition: box-shadow 0.12s;
   }
   .search:focus-within {
-    box-shadow: 0 0 0 4px var(--focus);
+    box-shadow: 0 0 0 3px var(--focus);
   }
   .search input {
     flex: 1;
@@ -114,24 +110,33 @@
     outline: none;
   }
   .search input::placeholder {
-    color: var(--text-3);
+    color: var(--text-2);
+  }
+  kbd {
+    width: 20px;
+    height: 20px;
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    border-radius: 5px;
+    box-shadow: inset 0 0 0 1px var(--border);
+    font: inherit;
+    font-size: 0.72rem;
+  }
+  .search:focus-within kbd {
+    display: none;
   }
   .create {
-    height: 48px;
-    border-radius: 18px;
     flex-shrink: 0;
   }
   .logo {
     display: none;
     align-items: center;
-    gap: 10px;
+    gap: 9px;
     flex-shrink: 0;
-    font-weight: 800;
-    font-size: 1.25rem;
-    letter-spacing: -0.03em;
-  }
-  .logo img {
-    border-radius: 10px;
+    font-weight: 650;
+    font-size: 1rem;
+    letter-spacing: -0.015em;
   }
   .logo.full {
     display: flex;
@@ -139,6 +144,7 @@
   .menu-btn {
     display: none;
     flex-shrink: 0;
+    background: none;
   }
   .grow {
     flex: 1;
@@ -148,9 +154,14 @@
     display: none;
   }
 
+  @media (hover: none) {
+    kbd {
+      display: none;
+    }
+  }
   @media (max-width: 1023px) {
     .topbar {
-      padding: 12px 20px;
+      padding: 0 14px;
     }
     .menu-btn,
     .logo {
@@ -159,14 +170,14 @@
   }
   @media (max-width: 640px) {
     .topbar {
-      padding: 10px 12px;
+      padding: 0 10px;
       gap: 8px;
     }
     .create span {
       display: none;
     }
     .create {
-      width: 48px;
+      aspect-ratio: 1;
       padding: 0;
     }
     .logo:not(.full) {

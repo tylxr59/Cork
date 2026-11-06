@@ -57,15 +57,14 @@
     position: fixed;
     top: 14px;
     right: 14px;
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     border-radius: 50%;
     border: none;
     display: grid;
     place-items: center;
-    background: var(--glass-strong);
-    color: var(--text);
-    box-shadow: var(--shadow-sm);
+    background: rgb(255 255 255 / 16%);
+    color: #fff;
     cursor: pointer;
   }
   @keyframes fade {

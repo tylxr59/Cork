@@ -5,6 +5,7 @@
   import { onPinEvent, toastError } from '../lib/session.svelte';
   import type { Pin } from '../lib/types';
   import Masonry from '../components/Masonry.svelte';
+  import PinSizeControl from '../components/PinSizeControl.svelte';
 
   let pins = $state<Pin[]>([]);
   let hasMore = $state(false);
@@ -57,6 +58,7 @@
 <div class="page">
   <div class="head">
     <h1>{q ? `Results for “${q}”` : 'All pins'}</h1>
+    <PinSizeControl />
   </div>
 
   {#if pins.length === 0 && loading}
@@ -72,7 +74,7 @@
       {/if}
     </div>
   {:else}
-    <Masonry {pins} showBoard />
+    <Masonry {pins} showBoard canEdit />
     {#if loading}<div class="spinner"></div>{/if}
   {/if}
   <div bind:this={sentinel}></div>
@@ -80,6 +82,10 @@
 
 <style>
   .head {
-    margin: 4px 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0 0 20px;
   }
 </style>

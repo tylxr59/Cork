@@ -8,7 +8,7 @@
 </script>
 
 {#if imports.total > 0}
-  <div class="import glass" role="status">
+  <div class="import" role="status">
     <div class="head">
       <strong>
         {#if active}Importing {settled + 1} of {imports.total}…{:else}Imported {imports.done} of {imports.total}{/if}
@@ -42,8 +42,9 @@
     z-index: 150;
     width: min(340px, calc(100vw - 32px));
     padding: 14px 16px;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-lg);
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    box-shadow: var(--shadow);
     display: flex;
     flex-direction: column;
     gap: 10px;

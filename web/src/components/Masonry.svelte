@@ -4,17 +4,20 @@
   // while still packing like a masonry layout.
   import Sortable from 'sortablejs';
   import type { Pin } from '../lib/types';
+  import { PIN_SIZES, pinSize } from '../lib/pinsize.svelte';
   import PinCard from './PinCard.svelte';
 
   let {
     pins,
     sortable = false,
     showBoard = false,
+    canEdit = false,
     onreorder,
   }: {
     pins: Pin[];
     sortable?: boolean;
     showBoard?: boolean;
+    canEdit?: boolean;
     onreorder?: (pins: Pin[]) => void;
   } = $props();
 
@@ -22,6 +25,7 @@
   const GAP = 18; // vertical gap between pins
 
   let grid: HTMLDivElement;
+  const minWidth = $derived(PIN_SIZES.find((s) => s.value === pinSize.value)!.px);
 
   // Sizes a cell to its content. Measures right away (so the first layout
   // doesn't depend on when ResizeObserver delivers), then on any resize.
@@ -70,11 +74,11 @@
   });
 </script>
 
-<div class="grid" class:sortable bind:this={grid} style:--row="{ROW}px">
+<div class="grid" class:sortable bind:this={grid} style:--row="{ROW}px" style:--pin-min="{minWidth}px">
   {#each pins as pin (pin.id)}
     <div class="cell" use:span>
       <div class="inner">
-        <PinCard {pin} {showBoard} />
+        <PinCard {pin} {showBoard} {canEdit} />
       </div>
     </div>
   {/each}
@@ -83,7 +87,7 @@
 <style>
   .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(230px, calc(50% - 9px)), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(min(var(--pin-min), calc(50% - 9px)), 1fr));
     grid-auto-rows: var(--row);
     column-gap: 18px;
     align-items: start;
