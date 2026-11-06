@@ -12,7 +12,7 @@
     onclose: () => void;
     children: Snippet;
     label: string;
-    /** Slide-over panel from the right (full screen on phones) instead of a centered dialog. */
+    /** Wide, viewport-height-capped dialog that scrolls inside itself (full screen on phones). */
     panel?: boolean;
   } = $props();
 
@@ -97,19 +97,18 @@
     cursor: pointer;
   }
 
-  /* slide-over */
+  /* centered panel */
   .panel {
     padding: 14px;
-    justify-content: flex-end;
-    align-items: stretch;
+    align-items: center;
     overflow: hidden;
   }
   .panel .box {
     max-width: 560px;
+    max-height: 100%;
     padding: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    animation: slide 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   @keyframes fade {
@@ -121,11 +120,6 @@
     from {
       opacity: 0;
       transform: translateY(14px);
-    }
-  }
-  @keyframes slide {
-    from {
-      transform: translateX(105%);
     }
   }
 
