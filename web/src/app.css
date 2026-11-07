@@ -18,21 +18,21 @@
   --border: rgb(60 50 40 / 13%);
   --hairline: rgb(0 0 0 / 10%);
 
-  --accent: #b4570f;
-  --accent-hover: #9c4b0d;
+  --accent: #6b3fb5;
+  --accent-hover: #5a3399;
   --accent-text: #ffffff;
-  --accent-soft: rgb(191 95 22 / 12%);
+  --accent-soft: rgb(107 63 181 / 12%);
 
   --success: #1d7a4f;
   --success-soft: rgb(29 122 79 / 12%);
   --danger: #d0312d;
   --danger-soft: rgb(208 49 45 / 10%);
 
-  --focus: rgb(180 87 15 / 38%);
+  --focus: rgb(107 63 181 / 38%);
   --shadow-sm: 0 0 0 0.5px rgb(0 0 0 / 14%), 0 1px 2px rgb(0 0 0 / 12%);
   --shadow: 0 0 0 0.5px rgb(0 0 0 / 12%), 0 8px 22px rgb(0 0 0 / 16%);
   --shadow-lg: 0 0 0 0.5px rgb(0 0 0 / 25%), 0 24px 70px rgb(0 0 0 / 35%);
-  --scrim: rgb(0 0 0 / 42%);
+  --scrim: rgb(0 0 0 / 30%);
 
   --radius-xl: 14px;
   --radius-lg: 12px;
@@ -58,17 +58,17 @@
   --border: rgb(255 250 240 / 12%);
   --hairline: rgb(255 255 255 / 8%);
 
-  --accent: #ee9a4d;
-  --accent-hover: #f4ab66;
-  --accent-text: #2a1a0c;
-  --accent-soft: rgb(238 154 77 / 16%);
+  --accent: #b89ef2;
+  --accent-hover: #c9b5f6;
+  --accent-text: #1e1433;
+  --accent-soft: rgb(184 158 242 / 16%);
 
   --success: #5fd09b;
   --success-soft: rgb(95 208 155 / 14%);
   --danger: #ff7468;
   --danger-soft: rgb(255 116 104 / 14%);
 
-  --focus: rgb(238 154 77 / 42%);
+  --focus: rgb(184 158 242 / 42%);
   --shadow-lg: 0 0 0 0.5px rgb(255 255 255 / 12%), 0 24px 70px rgb(0 0 0 / 60%);
   --scrim: rgb(0 0 0 / 58%);
   color-scheme: dark;
@@ -148,10 +148,6 @@ p {
 .panel {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-}
-
-.panel {
   border-radius: var(--radius-xl);
 }
 

@@ -39,7 +39,7 @@
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-<div class="backdrop" class:panel onclick={(e) => e.target === e.currentTarget && onclose()}>
+<div class="backdrop" class:sheet={panel} onclick={(e) => e.target === e.currentTarget && onclose()}>
   <div class="box" bind:this={box} role="dialog" aria-modal="true" aria-label={label} tabindex="-1">
     <button class="close" aria-label="Close" onclick={onclose}><X size={17} /></button>
     {@render children()}
@@ -63,6 +63,8 @@
     position: fixed;
     inset: 0;
     background: var(--scrim);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
     animation: fade 0.16s ease-out;
   }
   .box {
@@ -92,24 +94,25 @@
     cursor: pointer;
   }
   /* sits on top of the picture */
-  .panel .close {
+  .sheet .close {
     background: rgb(0 0 0 / 55%);
     color: #fff;
   }
 
   /* centered panel */
-  .panel {
+  .sheet {
     padding: 14px;
     align-items: center;
     overflow: hidden;
   }
-  .panel .box {
+  .sheet .box {
     max-width: 560px;
     max-height: 100%;
     padding: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
-    scrollbar-width: thin;
+    /* a scrollbar here would cut into the picture and the rounded corners */
+    scrollbar-width: none;
   }
 
   @keyframes fade {
@@ -130,15 +133,15 @@
       align-items: stretch;
     }
     .box,
-    .panel .box {
+    .sheet .box {
       max-width: none;
       border-radius: 0;
       min-height: 100%;
     }
-    .backdrop:not(.panel) .box {
+    .backdrop:not(.sheet) .box {
       padding: 64px 20px 28px;
     }
-    .panel .box {
+    .sheet .box {
       animation: rise-full 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
   }
