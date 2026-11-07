@@ -126,7 +126,7 @@
   <div class="spinner"></div>
 {:else}
   <div class="pin-view" class:modal class:editing class:page-card={!modal}>
-    <button type="button" class="image" aria-label="Expand image" title="Expand" onclick={() => (expanded = true)}>
+    <button type="button" class="image" aria-label="Expand image" title="Expand" style:background={pin.color || 'var(--surface-2)'} onclick={() => (expanded = true)}>
       <img src={pin.image_url} alt={pin.title} width={pin.width} height={pin.height} />
     </button>
     {#if expanded}
@@ -251,7 +251,6 @@
     width: 100%;
     padding: 0;
     border: none;
-    background: var(--side);
     cursor: zoom-in;
   }
   .image img {
@@ -260,7 +259,7 @@
     object-fit: contain;
   }
   .modal .image img {
-    max-height: 60vh;
+    max-height: 70vh;
   }
   /* keep the form in view while editing */
   .modal.editing .image img {

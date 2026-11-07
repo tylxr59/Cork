@@ -261,13 +261,13 @@ async function pinToCork(origin: string) {
       'h2{margin:0;font-size:18px}' +
       '.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;overflow:auto;padding:3px}' +
       'label{position:relative;display:block;aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer;outline:2px solid #8884}' +
-      'label:has(:checked){outline:3px solid #b4570f}' +
+      'label:has(:checked){outline:3px solid #6b3fb5}' +
       'label:has(:focus-visible){outline:3px solid Highlight}' +
       'label img{width:100%;height:100%;object-fit:cover;display:block}' +
-      'input{position:absolute;top:8px;left:8px;width:20px;height:20px;margin:0;accent-color:#b4570f;cursor:pointer}' +
+      'input{position:absolute;top:8px;left:8px;width:20px;height:20px;margin:0;accent-color:#6b3fb5;cursor:pointer}' +
       '.foot{display:flex;justify-content:flex-end;gap:10px}' +
       'button{font:inherit;font-weight:600;padding:9px 16px;border-radius:10px;border:1px solid #8886;background:none;color:inherit;cursor:pointer}' +
-      'button.go{border-color:#b4570f;background:#b4570f;color:#fff}' +
+      'button.go{border-color:#6b3fb5;background:#6b3fb5;color:#fff}' +
       'button:disabled{opacity:.5;cursor:default}'
   );
   root.adoptedStyleSheets = [sheet];
